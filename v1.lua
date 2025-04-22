@@ -82,7 +82,7 @@ local ToggleCircle = AimbotTab:CreateToggle({
 
 local CircleSizeSlider = AimbotTab:CreateSlider({
     Name = "Circle Size",
-    Range = {20, 100},
+    Range = {20, 1000},
     Increment = 5,
     Suffix = "px",
     CurrentValue = circleSize,
