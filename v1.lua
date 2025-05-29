@@ -65,30 +65,6 @@ local ToggleSilentAim = AimbotTab:CreateToggle({
     end
 })
 
-local function getClosestTarget()
-    local closestTarget = nil
-    local closestDistance = aimDistance
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local head = player.Character:FindFirstChild("Head")
-            if head and isVisible(head) then
-                local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local distToCircle = (Vector2.new(screenPoint.X, screenPoint.Y) - center).Magnitude
-                    local distanceFromLocal = (head.Position - Camera.CFrame.Position).Magnitude
-
-                    if distToCircle < circleSize / 2 and distanceFromLocal < closestDistance then
-                        closestDistance = distanceFromLocal
-                        closestTarget = head
-                    end
-                end
-            end
-        end
-    end
-    return closestTarget
-end
 
 -- Круг аимбота (отображается всегда, если включён)
 local ScreenGui = Instance.new("ScreenGui")
@@ -138,32 +114,7 @@ local DistanceSlider = AimbotTab:CreateSlider({
     end
 })
 
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
 
-local oldNamecall = mt.__namecall
-
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-
-    if silentAimEnabled and method == "FireServer" and tostring(self):lower():find("shoot") then
-        local target = getClosestTarget()
-        if target then
-            -- Заменяем позицию цели в аргументах на позицию головы цели
-            for i, arg in pairs(args) do
-                if typeof(arg) == "Vector3" then
-                    args[i] = target.Position
-                end
-            end
-            return oldNamecall(self, unpack(args))
-        end
-    end
-
-    return oldNamecall(self, ...)
-end)
-
-setreadonly(mt, true)
 ---------------------------
 -- ESP вкладка           --
 ---------------------------
@@ -279,6 +230,32 @@ local function getClosestTarget()
     return closestTarget
 end
 
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+
+local oldNamecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+
+    if silentAimEnabled and method == "FireServer" and tostring(self):lower():find("shoot") then
+        local target = getClosestTarget()
+        if target then
+            -- Заменяем позицию цели в аргументах на позицию головы цели
+            for i, arg in pairs(args) do
+                if typeof(arg) == "Vector3" then
+                    args[i] = target.Position
+                end
+            end
+            return oldNamecall(self, unpack(args))
+        end
+    end
+
+    return oldNamecall(self, ...)
+end)
+
+setreadonly(mt, true)
 ---------------------------
 -- Функции ESP         --
 ---------------------------
